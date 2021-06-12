@@ -12,9 +12,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geekbrains.tests.view.search.MainActivity
 import org.hamcrest.Matcher
 import org.junit.After
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+
+const val NUMBER_OF_RESULTS = "Number of results: 2417"
+const val SEARCH = "algol"
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityEspressoTest {
@@ -27,16 +31,48 @@ class MainActivityEspressoTest {
     }
 
     @Test
+    fun activity_NotNull() {
+        scenario.onActivity {
+            assertNotNull(it)
+        }
+    }
+
+    @Test
+    fun activityEditText_IsDisplayed() {
+        onView(withId(R.id.searchEditText)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun activityToDetailsActivityButton_IsDisplayed() {
+        onView(withId(R.id.toDetailsActivityButton)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun activityTotalCountTextView_IsInvisible() {
+        onView(withId(R.id.totalCountTextView)).check(matches(withEffectiveVisibility(Visibility.INVISIBLE)))
+    }
+
+    @Test
+    fun activityTotalCountTextView_IsVisible() {
+        onView(withId(R.id.searchEditText)).perform(click())
+        onView(withId(R.id.searchEditText)).perform(replaceText(SEARCH), closeSoftKeyboard())
+        onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
+
+        onView(isRoot()).perform(delay())
+        onView(withId(R.id.totalCountTextView)).check(matches(isDisplayed()))
+    }
+
+    @Test
     fun activitySearch_IsWorking() {
         onView(withId(R.id.searchEditText)).perform(click())
-        onView(withId(R.id.searchEditText)).perform(replaceText("algol"), closeSoftKeyboard())
+        onView(withId(R.id.searchEditText)).perform(replaceText(SEARCH), closeSoftKeyboard())
         onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
 
         if (BuildConfig.TYPE == MainActivity.FAKE) {
-            onView(withId(R.id.totalCountTextView)).check(matches(withText("Number of results: 42")))
+            onView(withId(R.id.totalCountTextView)).check(matches(withText(NUMBER_OF_RESULTS)))
         } else {
             onView(isRoot()).perform(delay())
-            onView(withId(R.id.totalCountTextView)).check(matches(withText("Number of results: 2416")))
+            onView(withId(R.id.totalCountTextView)).check(matches(withText(NUMBER_OF_RESULTS)))
         }
     }
 
