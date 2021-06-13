@@ -1,7 +1,9 @@
 package com.geekbrains.tests
 
 import android.view.View
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
@@ -12,9 +14,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geekbrains.tests.view.search.MainActivity
 import org.hamcrest.Matcher
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityEspressoTest {
@@ -27,20 +31,84 @@ class MainActivityEspressoTest {
     }
 
     @Test
-    fun activitySearch_IsWorking() {
-        onView(withId(R.id.searchEditText)).perform(click())
-        onView(withId(R.id.searchEditText)).perform(replaceText("algol"), closeSoftKeyboard())
-        onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
-
-        if (BuildConfig.TYPE == MainActivity.FAKE) {
-            onView(withId(R.id.totalCountTextView)).check(matches(withText("Number of results: 42")))
-        } else {
-            onView(isRoot()).perform(delay())
-            onView(withId(R.id.totalCountTextView)).check(matches(withText("Number of results: 2416")))
+    fun activity_NotNull() {
+        scenario.onActivity {
+            assertNotNull(it)
         }
     }
 
-    private fun delay(): ViewAction? {
+    @Test
+    fun test_toDetailActivity() {
+        onView(withId(R.id.toDetailsActivityButton)).perform(click())
+        onView(withId(R.id.layoutDetailActivity)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun test_toDetailActivity_and_back_MainActivity() {
+        onView(withId(R.id.toDetailsActivityButton)).perform(click())
+        onView(withId(R.id.layoutDetailActivity)).check(matches(isDisplayed()))
+
+        Espresso.pressBack()
+        onView(withId(R.id.layoutMainActivity)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun activityEditText_IsDisplayed() {
+        onView(withId(R.id.searchEditText)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun activityToDetailsActivityButton_IsDisplayed() {
+        onView(withId(R.id.toDetailsActivityButton)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun activity_Resumed() {
+        assertEquals(Lifecycle.State.RESUMED, scenario.state)
+    }
+
+    @Test
+    fun activityToDetailsActivityButton_ActivityNotResumed() {
+        onView(withId(R.id.toDetailsActivityButton)).perform(click())
+        assertNotEquals(Lifecycle.State.RESUMED, scenario.state)
+    }
+
+    @Test
+    fun activityTotalCountTextView_IsInvisible() {
+        onView(withId(R.id.totalCountTextView)).check(matches(withEffectiveVisibility(Visibility.INVISIBLE)))
+    }
+
+    @Test
+    fun activityTotalCountTextView_IsVisible() {
+        onView(withId(R.id.searchEditText)).perform(click())
+        onView(withId(R.id.searchEditText)).perform(replaceText(SEARCH), closeSoftKeyboard())
+        onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
+
+        if (BuildConfig.TYPE == MainActivity.FAKE) {
+            onView(withId(R.id.totalCountTextView)).check(matches(isDisplayed()))
+        } else {
+            onView(isRoot()).perform(delay())
+            onView(withId(R.id.totalCountTextView)).check(matches(isDisplayed()))
+        }
+    }
+
+    @Test
+    fun activitySearch_IsWorking() {
+        onView(withId(R.id.searchEditText)).perform(click())
+        onView(withId(R.id.searchEditText)).perform(replaceText(SEARCH), closeSoftKeyboard())
+        onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
+
+        if (BuildConfig.TYPE == MainActivity.FAKE) {
+            onView(withId(R.id.totalCountTextView))
+                .check(matches(withText(String.format("%s %d", NUMBER_OF_RESULTS, RESULT))))
+        } else {
+            onView(isRoot()).perform(delay())
+            onView(withId(R.id.totalCountTextView))
+                .check(matches(withText(String.format("%s %d", NUMBER_OF_RESULTS, RESULT))))
+        }
+    }
+
+    private fun delay(): ViewAction {
         return object : ViewAction {
             override fun getConstraints(): Matcher<View> = isRoot()
             override fun getDescription(): String = "wait for $2 seconds"
