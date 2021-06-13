@@ -3,6 +3,7 @@ package com.geekbrains.tests
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
@@ -34,6 +35,21 @@ class MainActivityEspressoTest {
         scenario.onActivity {
             assertNotNull(it)
         }
+    }
+
+    @Test
+    fun test_toDetailActivity() {
+        onView(withId(R.id.toDetailsActivityButton)).perform(click())
+        onView(withId(R.id.layoutDetailActivity)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun test_toDetailActivity_and_back_MainActivity() {
+        onView(withId(R.id.toDetailsActivityButton)).perform(click())
+        onView(withId(R.id.layoutDetailActivity)).check(matches(isDisplayed()))
+
+        Espresso.pressBack()
+        onView(withId(R.id.layoutMainActivity)).check(matches(isDisplayed()))
     }
 
     @Test
