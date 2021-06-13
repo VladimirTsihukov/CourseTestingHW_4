@@ -1,6 +1,7 @@
 package com.geekbrains.tests
 
 import android.view.View
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.UiController
@@ -12,13 +13,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geekbrains.tests.view.search.MainActivity
 import org.hamcrest.Matcher
 import org.junit.After
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-const val NUMBER_OF_RESULTS = "Number of results: 2417"
-const val SEARCH = "algol"
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityEspressoTest {
@@ -48,6 +47,17 @@ class MainActivityEspressoTest {
     }
 
     @Test
+    fun activity_Resumed() {
+        assertEquals(Lifecycle.State.RESUMED, scenario.state)
+    }
+
+    @Test
+    fun activityToDetailsActivityButton_ActivityNotResumed() {
+        onView(withId(R.id.toDetailsActivityButton)).perform(click())
+        assertNotEquals(Lifecycle.State.RESUMED, scenario.state)
+    }
+
+    @Test
     fun activityTotalCountTextView_IsInvisible() {
         onView(withId(R.id.totalCountTextView)).check(matches(withEffectiveVisibility(Visibility.INVISIBLE)))
     }
@@ -58,8 +68,12 @@ class MainActivityEspressoTest {
         onView(withId(R.id.searchEditText)).perform(replaceText(SEARCH), closeSoftKeyboard())
         onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
 
-        onView(isRoot()).perform(delay())
-        onView(withId(R.id.totalCountTextView)).check(matches(isDisplayed()))
+        if (BuildConfig.TYPE == MainActivity.FAKE) {
+            onView(withId(R.id.totalCountTextView)).check(matches(isDisplayed()))
+        } else {
+            onView(isRoot()).perform(delay())
+            onView(withId(R.id.totalCountTextView)).check(matches(isDisplayed()))
+        }
     }
 
     @Test
@@ -69,14 +83,16 @@ class MainActivityEspressoTest {
         onView(withId(R.id.searchEditText)).perform(pressImeActionButton())
 
         if (BuildConfig.TYPE == MainActivity.FAKE) {
-            onView(withId(R.id.totalCountTextView)).check(matches(withText(NUMBER_OF_RESULTS)))
+            onView(withId(R.id.totalCountTextView))
+                .check(matches(withText(String.format("%s %d", NUMBER_OF_RESULTS, RESULT))))
         } else {
             onView(isRoot()).perform(delay())
-            onView(withId(R.id.totalCountTextView)).check(matches(withText(NUMBER_OF_RESULTS)))
+            onView(withId(R.id.totalCountTextView))
+                .check(matches(withText(String.format("%s %d", NUMBER_OF_RESULTS, RESULT))))
         }
     }
 
-    private fun delay(): ViewAction? {
+    private fun delay(): ViewAction {
         return object : ViewAction {
             override fun getConstraints(): Matcher<View> = isRoot()
             override fun getDescription(): String = "wait for $2 seconds"
